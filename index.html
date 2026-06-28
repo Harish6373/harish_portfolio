@@ -1093,7 +1093,7 @@ img { display: block; max-width: 100%; }
       <p class="contact-body">
         I'm open to full-time roles, freelance projects, research collaborations, and anything in between. If you're working on something interesting — or just want to talk — my inbox is open.
       </p>
-      <a href="mailto:harish637426@gmail.com" class="btn-rust">Say hello</a>
+      <a href="mailto:harish@example.com" class="btn-rust">Say hello</a>
     </div>
 
     <div class="contact-links-col reveal" style="transition-delay:.2s">
@@ -1106,8 +1106,8 @@ img { display: block; max-width: 100%; }
         <span>LinkedIn — harishsns</span>
         <span class="arrow">↗</span>
       </a>
-      <a href="mailto:harish637426@gmail.com" class="contact-link-item">
-        <span>Email — harish637426@</span>
+      <a href="mailto:harish@example.com" class="contact-link-item">
+        <span>Email</span>
         <span class="arrow">↗</span>
       </a>
     </div>
@@ -1146,7 +1146,7 @@ img { display: block; max-width: 100%; }
         <div class="rc-contact-row">
           <span class="rc-contact-item">
             <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            harish637426@gmail.com
+            harish@example.com
           </span>
           <span class="rc-contact-item">
             <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
@@ -1715,66 +1715,160 @@ img { display: block; max-width: 100%; }
 </button>
 
 <script>
-(function(){
-  var btn    = document.getElementById('music-btn');
-  var audio  = document.getElementById('bg-audio');
-  var label  = document.getElementById('music-label');
-  var note   = document.getElementById('icon-note');
-  var bars   = document.getElementById('music-bars');
-  var playing = false;
-  var ft = null;
+(function () {
 
-  if(!btn || !audio) return;
+  const btn = document.getElementById("music-btn");
+  const audio = document.getElementById("bg-audio");
+  const label = document.getElementById("music-label");
+  const note = document.getElementById("icon-note");
+  const bars = document.getElementById("music-bars");
 
-  function fadeTo(target, dur){
-    dur = dur || 900;
-    if(ft) clearInterval(ft);
-    var start = audio.volume;
-    var steps = Math.round(dur / 16);
-    var s = 0;
-    ft = setInterval(function(){
-      s++;
-      audio.volume = Math.min(1, Math.max(0, start + (target - start) * (s / steps)));
-      if(s >= steps){
+  if (!btn || !audio) return;
+
+  let playing = false;
+  let fadeInterval = null;
+
+  function fadeTo(target, duration = 900) {
+
+    clearInterval(fadeInterval);
+
+    const start = audio.volume;
+    const steps = Math.max(1, Math.floor(duration / 16));
+    let current = 0;
+
+    fadeInterval = setInterval(() => {
+
+      current++;
+
+      audio.volume = start + ((target - start) * current / steps);
+
+      if (current >= steps) {
+
+        clearInterval(fadeInterval);
+
         audio.volume = target;
-        clearInterval(ft);
-        if(target === 0) audio.pause();
+
+        if (target === 0) {
+          audio.pause();
+        }
+
       }
-    }, 16);
+
+    },16);
+
   }
 
-  function showLabel(text, dur){
+  function showLabel(text, time = 2000) {
+
     label.textContent = text;
-    label.classList.add('show');
-    setTimeout(function(){ label.classList.remove('show'); }, dur || 2000);
+    label.classList.add("show");
+
+    setTimeout(() => {
+      label.classList.remove("show");
+    }, time);
+
   }
 
-  function setPlayState(on){
-    playing = on;
-    note.style.display = on ? 'none' : '';
-    bars.style.display = on ? 'flex' : 'none';
-    btn.classList.toggle('playing', on);
-    btn.setAttribute('aria-label', on ? 'Pause background music' : 'Play background music');
-    showLabel(on ? 'NOW PLAYING' : 'PAUSED', on ? 2400 : 1600);
+  function updateUI(isPlaying){
+
+    playing = isPlaying;
+
+    note.style.display = isPlaying ? "none" : "";
+
+    bars.style.display = isPlaying ? "flex" : "none";
+
+    btn.classList.toggle("playing", isPlaying);
+
+    btn.setAttribute(
+      "aria-label",
+      isPlaying
+        ? "Pause background music"
+        : "Play background music"
+    );
+
   }
 
-  btn.addEventListener('click', function(){
-    if(!playing){
+  async function playMusic(){
+
+    if(playing) return;
+
+    try{
+
       audio.volume = 0;
-      audio.play().then(function(){
-        fadeTo(0.35);
-        setPlayState(true);
-      }).catch(function(e){
-        console.warn('Audio blocked:', e);
-        showLabel('CLICK AGAIN TO PLAY', 2000);
-      });
-    } else {
-      fadeTo(0, 700);
-      setPlayState(false);
+
+      await audio.play();
+
+      fadeTo(0.35);
+
+      updateUI(true);
+
+      showLabel("NOW PLAYING",2400);
+
+    }catch(err){
+
+      console.log(err);
+
     }
+
+  }
+
+  function pauseMusic(){
+
+    fadeTo(0,700);
+
+    updateUI(false);
+
+    showLabel("PAUSED",1600);
+
+  }
+
+  // -------- AUTO PLAY AFTER FIRST USER INTERACTION --------
+
+  function firstInteraction(){
+
+    playMusic();
+
+    document.removeEventListener("click", firstInteraction);
+    document.removeEventListener("wheel", firstInteraction);
+    document.removeEventListener("keydown", firstInteraction);
+    document.removeEventListener("touchstart", firstInteraction);
+
+  }
+
+  document.addEventListener("click", firstInteraction, { once:true });
+
+  document.addEventListener("wheel", firstInteraction, {
+    once:true,
+    passive:true
   });
 
-  setTimeout(function(){ showLabel('AMBIENT MUSIC', 2400); }, 3500);
+  document.addEventListener("keydown", firstInteraction, { once:true });
+
+  document.addEventListener("touchstart", firstInteraction, {
+    once:true,
+    passive:true
+  });
+
+  // -------- BUTTON --------
+
+  btn.addEventListener("click", function(e){
+
+    e.stopPropagation();
+
+    if(playing){
+
+      pauseMusic();
+
+    }else{
+
+      playMusic();
+
+    }
+
+  });
+
+  showLabel("AMBIENT MUSIC",2400);
+
 })();
 </script>
 </body>
